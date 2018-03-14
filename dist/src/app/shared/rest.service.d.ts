@@ -1,0 +1,33 @@
+import { Headers, Http } from '@angular/http';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/catch';
+import 'rxjs/add/observable/throw';
+import { Observable } from 'rxjs/Observable';
+import { OptionCoreConfig } from '../option-core.config';
+import { OptResponse } from './response';
+import { OptEntity } from './entity.model';
+import { OptAuthService } from './auth.service';
+import { FiltersOptions } from './filter';
+import { OptFilteredResponse } from './filtered-response';
+export declare abstract class OptRestService {
+    protected config: OptionCoreConfig;
+    protected auth: OptAuthService;
+    protected http: Http;
+    protected defaultHeaders: Headers;
+    protected apiVersion: string;
+    protected apiUrl: string;
+    constructor(config: OptionCoreConfig, auth: OptAuthService, http: Http);
+    abstract getEntityBaseUrl(): string;
+    abstract createEntity(json: any): OptEntity;
+    createFilteredResponse(response: any): OptFilteredResponse;
+    getBaseUrl(): string;
+    getHeaders(): Headers;
+    getList(): Observable<OptEntity[]>;
+    getFilteredList(filtersOptions: FiltersOptions): Observable<OptFilteredResponse>;
+    getOne(id: number): Observable<OptEntity>;
+    remove(id: number): Observable<OptResponse>;
+    create(entity: OptEntity): Observable<OptResponse>;
+    update(entity: OptEntity): Observable<OptResponse>;
+    change(entity: OptEntity): Observable<OptResponse>;
+    protected handleError(error: Response): Observable<any>;
+}
