@@ -45,10 +45,7 @@ var RestMock = (function (_super) {
     };
     RestMock.prototype.requests = function () {
         // get all resources
-        var isEndsWith = this.connection.request.url.endsWith(this.getResourceEndpoint());
-        var getAllParamsRegex = new RegExp(this.getResourceEndpoint() + '\\?');
-        var isGetAllParams = this.connection.request.url.match(getAllParamsRegex);
-        if ((isEndsWith || isGetAllParams) && this.connection.request.method === RequestMethod.Get) {
+        if (this.connection.request.url.endsWith(this.getResourceEndpoint()) && this.connection.request.method === RequestMethod.Get) {
             // check for fake auth token in header and return resources if valid, this security is implemented server side in a real application
             if (!this.hasSecurityMock() || this.isAuthorizedUser()) {
                 // respond 200 OK with resources

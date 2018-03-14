@@ -9,17 +9,15 @@ export abstract class OptFormComponent implements OnInit {
   form: FormGroup;
   submitted = false;
 
-  serverMessage: ServerMessage = {
+  serverMessage = {
     message: 'Server message',
     show: false,
     isStatusOk: true
   };
 
-  protected SERVER_MESSAGES: any = {
+  SERVER_MESSAGES: any = {
     401: 'Unauthorized message',
-    403: 'Forbidden message',
-    500: 'Server error',
-    '*': 'Default error'
+    403: 'Forbidden message'
   };
 
   /**
@@ -81,15 +79,6 @@ export abstract class OptFormComponent implements OnInit {
     return this.form.valid;
   }
 
-  setServerMessage(statusCode: any, isSuccessMessage: boolean = false) {
-    this.serverMessage.message = this.SERVER_MESSAGES[statusCode];
-    if (!this.serverMessage.message) {
-      this.serverMessage.message = this.SERVER_MESSAGES['*'];
-    }
-    this.serverMessage.show = true;
-    this.serverMessage.isStatusOk = isSuccessMessage;
-  }
-
   onSubmit() {
     const self = this;
     self.submitted = true;
@@ -115,22 +104,13 @@ export abstract class OptFormComponent implements OnInit {
     const form = this.form;
 
     for (const field in this.formErrors) {
-      if (!this.formErrors.hasOwnProperty(field)) {
-        continue;
-      }
       // clear previous error message (if any)
       this.formErrors[field] = '';
-      const control: any = form.get(field);
+      const control = form.get(field);
 
-      if ((control && control.dirty && !control.valid) || (control && this.submitted)) {
-        if (!control.errors) {
-          continue;
-        }
+      if ((control && control.dirty && !control.valid) || this.submitted) {
         const messages = this.VALIDATION_MESSAGES[field];
-        for (const key in control.errors) {
-          if (!control.errors.hasOwnProperty(key)) {
-            continue;
-          }
+        for (const key in (<any>control).errors) {
           if (this.formErrors[field] === '') {
             this.formErrors[field] = messages[key];
           }
@@ -138,10 +118,4 @@ export abstract class OptFormComponent implements OnInit {
       }
     }
   }
-}
-
-export interface ServerMessage {
-  message: string;
-  show: boolean;
-  isStatusOk: boolean;
 }

@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
 
 import { OptUser } from './user.model';
-import { OptRestService } from '../shared/rest.service';
-import { OptResponse } from '../shared/response';
-
-import { Observable } from 'rxjs/Observable';
+import { OptRestService } from '../common/rest.service';
+import { OptResponse } from '../common/response.model';
 
 @Injectable()
 export class OptUserService extends OptRestService {
 
-  protected getMeObservable: Observable<OptUser> | null;
+  private user: OptUser;
 
   getEntityBaseUrl(): string {
     return this.getBaseUrl() + '/users';
@@ -19,21 +17,21 @@ export class OptUserService extends OptRestService {
     return new OptUser(json);
   }
 
-  getMe(): Observable<OptUser> {
-    const self = this;
-    if (this.getMeObservable) {
-      return this.getMeObservable;
+  getMe(): Promise<OptUser> {
+    if (this.user) {
+      return Promise.resolve(this.user);
     }
-    return this.getMeObservable = this.http
+    const self = this;
+    return this.http
       .get(this.getEntityBaseUrl() + '/me', {headers: this.getHeaders()})
-      .map(function (response: any) {
-        self.getMeObservable = null;
-        return self.createEntity(response.json().result);
+      .toPromise()
+      .then(function(response: any) {
+        return self.user = self.createEntity(response.json().result);
       })
       .catch(this.handleError);
   }
 
-  changePassword(actualPassword: string, newPassword: string, confirmationPassword: string): Observable<OptResponse> {
+  changePassword(actualPassword: string, newPassword: string, confirmationPassword: string) {
     const body = {
       oldPassword: actualPassword,
       password: newPassword,
@@ -41,7 +39,8 @@ export class OptUserService extends OptRestService {
     };
     return this.http
       .post(this.getEntityBaseUrl() + '/me/password', JSON.stringify(body), {headers: this.getHeaders()})
-      .map(response => OptResponse.fromJSON(response))
+      .toPromise()
+      .then(response => OptResponse.fromJSON(response))
       .catch(this.handleError);
   }
 }

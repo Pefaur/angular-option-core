@@ -4,8 +4,12 @@ export declare abstract class OptFormComponent implements OnInit {
     protected formBuilder: FormBuilder;
     form: FormGroup;
     submitted: boolean;
-    serverMessage: ServerMessage;
-    protected SERVER_MESSAGES: any;
+    serverMessage: {
+        message: string;
+        show: boolean;
+        isStatusOk: boolean;
+    };
+    SERVER_MESSAGES: any;
     /**
      *
      * @example {
@@ -41,13 +45,7 @@ export declare abstract class OptFormComponent implements OnInit {
     constructor(formBuilder: FormBuilder);
     ngOnInit(): void;
     isFromValid(): boolean;
-    setServerMessage(statusCode: any, isSuccessMessage?: boolean): void;
     onSubmit(): void;
     buildForm(): void;
     onValueChanged(data?: any): void;
-}
-export interface ServerMessage {
-    message: string;
-    show: boolean;
-    isStatusOk: boolean;
 }

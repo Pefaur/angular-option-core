@@ -1,4 +1,4 @@
-import { OptEntity } from '../shared/entity.model';
+import { OptEntity } from '../common/entity.model';
 
 /**
  * @author Daniel Caris Zapata <dcaris@optionti.com>
@@ -14,20 +14,6 @@ export class OptUser extends OptEntity {
 
   getFormEntityName(): string {
     return 'user';
-  }
-
-  toRegisterForm(): Object {
-    const formContent = super.getFormContent();
-    Object.keys(formContent).map(function(key: any) {
-      const attribute = (<any>formContent)[key];
-      if (key === 'password') {
-        (<any>formContent)['plainPassword'] = {
-          'first': attribute,
-          'second': attribute
-        };
-      }
-    });
-    return {'register': formContent};
   }
 
   protected decode(jsonObject: object): void {

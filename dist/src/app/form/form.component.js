@@ -14,9 +14,7 @@ var OptFormComponent = (function () {
         };
         this.SERVER_MESSAGES = {
             401: 'Unauthorized message',
-            403: 'Forbidden message',
-            500: 'Server error',
-            '*': 'Default error'
+            403: 'Forbidden message'
         };
         /**
          *
@@ -63,15 +61,6 @@ var OptFormComponent = (function () {
     OptFormComponent.prototype.isFromValid = function () {
         return this.form.valid;
     };
-    OptFormComponent.prototype.setServerMessage = function (statusCode, isSuccessMessage) {
-        if (isSuccessMessage === void 0) { isSuccessMessage = false; }
-        this.serverMessage.message = this.SERVER_MESSAGES[statusCode];
-        if (!this.serverMessage.message) {
-            this.serverMessage.message = this.SERVER_MESSAGES['*'];
-        }
-        this.serverMessage.show = true;
-        this.serverMessage.isStatusOk = isSuccessMessage;
-    };
     OptFormComponent.prototype.onSubmit = function () {
         var self = this;
         self.submitted = true;
@@ -94,21 +83,12 @@ var OptFormComponent = (function () {
         }
         var form = this.form;
         for (var field in this.formErrors) {
-            if (!this.formErrors.hasOwnProperty(field)) {
-                continue;
-            }
             // clear previous error message (if any)
             this.formErrors[field] = '';
             var control = form.get(field);
-            if ((control && control.dirty && !control.valid) || (control && this.submitted)) {
-                if (!control.errors) {
-                    continue;
-                }
+            if ((control && control.dirty && !control.valid) || this.submitted) {
                 var messages = this.VALIDATION_MESSAGES[field];
                 for (var key in control.errors) {
-                    if (!control.errors.hasOwnProperty(key)) {
-                        continue;
-                    }
                     if (this.formErrors[field] === '') {
                         this.formErrors[field] = messages[key];
                     }

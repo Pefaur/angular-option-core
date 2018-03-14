@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-import { OptEntity } from '../shared/entity.model';
+import { OptEntity } from '../common/entity.model';
 /**
  * @author Daniel Caris Zapata <dcaris@optionti.com>
  */
@@ -19,19 +19,6 @@ var OptUser = (function (_super) {
     }
     OptUser.prototype.getFormEntityName = function () {
         return 'user';
-    };
-    OptUser.prototype.toRegisterForm = function () {
-        var formContent = _super.prototype.getFormContent.call(this);
-        Object.keys(formContent).map(function (key) {
-            var attribute = formContent[key];
-            if (key === 'password') {
-                formContent['plainPassword'] = {
-                    'first': attribute,
-                    'second': attribute
-                };
-            }
-        });
-        return { 'register': formContent };
     };
     OptUser.prototype.decode = function (jsonObject) {
         this.id = jsonObject['id'];

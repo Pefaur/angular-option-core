@@ -1,4 +1,4 @@
-import { OptEntity } from '../shared/entity.model';
+import { OptEntity } from '../common/entity.model';
 /**
  * @author Daniel Caris Zapata <dcaris@optionti.com>
  */
@@ -10,7 +10,6 @@ export declare class OptUser extends OptEntity {
     roles: string[];
     phoneNumber: string;
     getFormEntityName(): string;
-    toRegisterForm(): Object;
     protected decode(jsonObject: object): void;
     setFullName(firstName: string, lastName: string): void;
 }

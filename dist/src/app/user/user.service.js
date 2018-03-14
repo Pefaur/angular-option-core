@@ -10,8 +10,8 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import { Injectable } from '@angular/core';
 import { OptUser } from './user.model';
-import { OptRestService } from '../shared/rest.service';
-import { OptResponse } from '../shared/response';
+import { OptRestService } from '../common/rest.service';
+import { OptResponse } from '../common/response.model';
 var OptUserService = (function (_super) {
     __extends(OptUserService, _super);
     function OptUserService() {
@@ -24,15 +24,15 @@ var OptUserService = (function (_super) {
         return new OptUser(json);
     };
     OptUserService.prototype.getMe = function () {
-        var self = this;
-        if (this.getMeObservable) {
-            return this.getMeObservable;
+        if (this.user) {
+            return Promise.resolve(this.user);
         }
-        return this.getMeObservable = this.http
+        var self = this;
+        return this.http
             .get(this.getEntityBaseUrl() + '/me', { headers: this.getHeaders() })
-            .map(function (response) {
-            self.getMeObservable = null;
-            return self.createEntity(response.json().result);
+            .toPromise()
+            .then(function (response) {
+            return self.user = self.createEntity(response.json().result);
         })
             .catch(this.handleError);
     };
@@ -44,7 +44,8 @@ var OptUserService = (function (_super) {
         };
         return this.http
             .post(this.getEntityBaseUrl() + '/me/password', JSON.stringify(body), { headers: this.getHeaders() })
-            .map(function (response) { return OptResponse.fromJSON(response); })
+            .toPromise()
+            .then(function (response) { return OptResponse.fromJSON(response); })
             .catch(this.handleError);
     };
     return OptUserService;

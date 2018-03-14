@@ -1,15 +1,14 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { OptAuthService } from './shared/auth.service';
-import { OptLazyScriptService } from './lazy-script/lazy-script.service';
-import { MODULE_CONFIG } from './option-core.config';
+import { OptAuthService } from './common/auth.service';
+import { API_URL } from './common/api-url.config';
 var OptionCoreModule = (function () {
     function OptionCoreModule() {
     }
-    OptionCoreModule.forRoot = function (config) {
+    OptionCoreModule.forRoot = function (apiUrl) {
         return {
             ngModule: OptionCoreModule,
-            providers: [OptAuthService, OptLazyScriptService, { provide: MODULE_CONFIG, useValue: config }]
+            providers: [OptAuthService, { provide: API_URL, useValue: apiUrl }]
         };
     };
     return OptionCoreModule;

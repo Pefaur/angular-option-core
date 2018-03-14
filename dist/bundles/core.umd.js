@@ -1,26 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/common'), require('@angular/http'), require('rxjs/add/observable/of'), require('rxjs/Observable'), require('util'), require('moment'), require('rxjs/add/operator/map'), require('rxjs/add/operator/catch'), require('rxjs/add/observable/throw'), require('@angular/router'), require('@angular/http/testing'), require('@angular/forms')) :
-	typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/common', '@angular/http', 'rxjs/add/observable/of', 'rxjs/Observable', 'util', 'moment', 'rxjs/add/operator/map', 'rxjs/add/operator/catch', 'rxjs/add/observable/throw', '@angular/router', '@angular/http/testing', '@angular/forms'], factory) :
-	(factory((global.ng = global.ng || {}, global.ng.core = global.ng.core || {}),global.ng.core,global.ng.common,global.ng.http,global.Rx,global.Rx,global.util,global.moment,global.Rx,global.Rx,global.Rx,global.ng.router,global._angular_http_testing,global.ng.forms));
-}(this, (function (exports,_angular_core,_angular_common,_angular_http,rxjs_add_observable_of,rxjs_Observable,util,moment,rxjs_add_operator_map,rxjs_add_operator_catch,rxjs_add_observable_throw,_angular_router,_angular_http_testing,_angular_forms) { 'use strict';
-
-var MODULE_CONFIG = new _angular_core.InjectionToken('module.config');
-// Example
-// export const API_URL: string = 'http://api.backend.com';
-// export const LAZY_SCRIPT_STORE: OptScript[] = [
-//   {
-//     name: 'slimscroll',
-//     src: '../../../assets/plugins/slimscroll/jquery.slimscroll.js'
-//   },
-//   {
-//     name: 'colorpicker',
-//     src: '../../../assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js'
-//   }
-// ];
-//  export const MODULE_CONFIG = {
-//    apiUrl: API_URL,
-//    lazyScriptsStore: LAZY_SCRIPT_STORE
-//  };
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/common'), require('@angular/http'), require('rxjs/add/operator/toPromise'), require('@angular/router'), require('@angular/http/testing'), require('@angular/forms')) :
+	typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/common', '@angular/http', 'rxjs/add/operator/toPromise', '@angular/router', '@angular/http/testing', '@angular/forms'], factory) :
+	(factory((global.ng = global.ng || {}, global.ng.core = global.ng.core || {}),global.ng.core,global._angular_common,global._angular_http,null,global._angular_router,global._angular_http_testing,global._angular_forms));
+}(this, (function (exports,_angular_core,_angular_common,_angular_http,rxjs_add_operator_toPromise,_angular_router,_angular_http_testing,_angular_forms) { 'use strict';
 
 /**
  * @author Carolina Pinzon <cpinzon@option.cl>
@@ -45,23 +27,27 @@ var OptResponse = (function () {
     return OptResponse;
 }());
 
+var API_URL = new _angular_core.InjectionToken('apiUrl.config');
+
 var OptAuthService = (function () {
-    function OptAuthService(config, http) {
-        this.config = config;
+    function OptAuthService(baseUrl, http) {
+        this.baseUrl = baseUrl;
         this.http = http;
         this.headers = new _angular_http.Headers({ 'Content-Type': 'application/json' });
-        this.baseUrl = config.apiUrl;
     }
     OptAuthService.prototype.register = function (user) {
+        var self = this;
         return this.http
-            .post(this.baseUrl + '/register', JSON.stringify(user.toRegisterForm()), { headers: this.headers })
-            .map(function (response) {
+            .post(this.baseUrl + '/register', JSON.stringify(user.toForm()), { headers: this.headers })
+            .toPromise()
+            .then(function (response) {
+            self.setToken(response.json().authorization.simpleToken);
             return OptResponse.fromJSON(response);
         })
             .catch(this.handleError);
     };
     OptAuthService.prototype.login = function (email, password) {
-        var _this = this;
+        var self = this;
         var credentials = {
             'credentials': {
                 'username': email,
@@ -70,8 +56,9 @@ var OptAuthService = (function () {
         };
         return this.http
             .post(this.baseUrl + '/login', JSON.stringify(credentials), { headers: this.headers })
-            .map(function (response) {
-            _this.setToken(response.json().authorization.simpleToken);
+            .toPromise()
+            .then(function (response) {
+            self.setToken(response.json().authorization.simpleToken);
             return OptResponse.fromJSON(response);
         })
             .catch(this.handleError);
@@ -81,7 +68,7 @@ var OptAuthService = (function () {
         var response = new OptResponse();
         response.isStatusOk = true;
         response.statusCode = 200;
-        return rxjs_Observable.Observable.of(response);
+        return Promise.resolve(response);
     };
     OptAuthService.prototype.recoverPassword = function (email) {
         // reset/send-email
@@ -89,7 +76,8 @@ var OptAuthService = (function () {
         var body = { username: email };
         return this.http
             .post(this.baseUrl + '/reset/send-email', JSON.stringify(body), { headers: this.headers })
-            .map(function (response) {
+            .toPromise()
+            .then(function (response) {
             return OptResponse.fromJSON(response);
         })
             .catch(this.handleError);
@@ -101,7 +89,8 @@ var OptAuthService = (function () {
         };
         return this.http
             .post(this.baseUrl + '/reset-password/' + token, JSON.stringify(body), { headers: this.headers })
-            .map(function (response) {
+            .toPromise()
+            .then(function (response) {
             return OptResponse.fromJSON(response);
         })
             .catch(this.handleError);
@@ -123,8 +112,7 @@ var OptAuthService = (function () {
     };
     
     OptAuthService.prototype.handleError = function (error) {
-        console.error('An error occurred', error);
-        return rxjs_Observable.Observable.throw(OptResponse.fromJSON(error));
+        return Promise.reject(OptResponse.fromJSON(error));
     };
     return OptAuthService;
 }());
@@ -133,87 +121,17 @@ OptAuthService.decorators = [
 ];
 /** @nocollapse */
 OptAuthService.ctorParameters = function () { return [
-    { type: undefined, decorators: [{ type: _angular_core.Inject, args: [MODULE_CONFIG,] },] },
+    { type: undefined, decorators: [{ type: _angular_core.Inject, args: [API_URL,] },] },
     { type: _angular_http.Http, },
-]; };
-
-var OptLazyScriptService = (function () {
-    function OptLazyScriptService(config) {
-        var _this = this;
-        this.config = config;
-        this.scripts = {};
-        config.lazyScriptsStore.forEach(function (script) {
-            _this.scripts[script.name] = {
-                loaded: false,
-                src: script.src
-            };
-        });
-    }
-    OptLazyScriptService.prototype.load = function () {
-        var _this = this;
-        var scripts = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            scripts[_i] = arguments[_i];
-        }
-        var promises = [];
-        scripts.forEach(function (script) { return promises.push(_this.loadScript(script)); });
-        return Promise.all(promises);
-    };
-    OptLazyScriptService.prototype.loadScript = function (name) {
-        var _this = this;
-        if (this.scripts[name].promise) {
-            return this.scripts[name].promise;
-        }
-        return this.scripts[name].promise = new Promise(function (resolve, reject) {
-            // resolve if already loaded
-            if (_this.scripts[name].loaded) {
-                resolve({ script: name, loaded: true, status: 'Already Loaded' });
-            }
-            else {
-                // load script
-                var script_1 = document.createElement('script');
-                script_1.type = 'text/javascript';
-                script_1.src = _this.scripts[name].src;
-                if (script_1.readyState) {
-                    script_1.onreadystatechange = function () {
-                        if (script_1.readyState === 'loaded' || script_1.readyState === 'complete') {
-                            script_1.onreadystatechange = null;
-                            _this.scripts[name].loaded = true;
-                            resolve({ script: name, loaded: true, status: 'Loaded' });
-                        }
-                    };
-                }
-                else {
-                    script_1.onload = function () {
-                        _this.scripts[name].loaded = true;
-                        resolve({ script: name, loaded: true, status: 'Loaded' });
-                    };
-                }
-                script_1.onerror = function (error) { return resolve({ script: name, loaded: false, status: 'Loaded' }); };
-                document.getElementsByTagName('head')[0].appendChild(script_1);
-            }
-        });
-    };
-    OptLazyScriptService.prototype.isLoadedScript = function (name) {
-        return !!this.scripts[name].loaded;
-    };
-    return OptLazyScriptService;
-}());
-OptLazyScriptService.decorators = [
-    { type: _angular_core.Injectable },
-];
-/** @nocollapse */
-OptLazyScriptService.ctorParameters = function () { return [
-    { type: undefined, decorators: [{ type: _angular_core.Inject, args: [MODULE_CONFIG,] },] },
 ]; };
 
 var OptionCoreModule = (function () {
     function OptionCoreModule() {
     }
-    OptionCoreModule.forRoot = function (config) {
+    OptionCoreModule.forRoot = function (apiUrl) {
         return {
             ngModule: OptionCoreModule,
-            providers: [OptAuthService, OptLazyScriptService, { provide: MODULE_CONFIG, useValue: config }]
+            providers: [OptAuthService, { provide: API_URL, useValue: apiUrl }]
         };
     };
     return OptionCoreModule;
@@ -241,38 +159,6 @@ var OptEntity = (function () {
         this.decode(jsonObject);
     }
     /**
-     * Use for generate form attribute from key instance attribute
-     */
-    OptEntity.prototype.getFormContentAttribute = function (key, attribute) {
-        var _this = this;
-        var formAttribute;
-        if (key !== 'id' && !util.isUndefined(attribute)) {
-            var attributeId = attribute && attribute.id ? attribute.id : null;
-            attributeId = !attributeId && (attribute && attribute._id) ? attribute._id : attributeId;
-            if (attribute instanceof OptEntity && attributeId) {
-                formAttribute = attributeId;
-            }
-            else if (moment.isMoment(attribute)) {
-                formAttribute = attribute.format();
-            }
-            else if (Array.isArray(attribute)) {
-                if (attribute.length > 0) {
-                    formAttribute = [];
-                    Object.keys(attribute).map(function (subAttributeKey) {
-                        var formContentAttribute = _this.getFormContentAttribute(subAttributeKey, attribute[subAttributeKey]);
-                        if (!util.isUndefined(formContentAttribute)) {
-                            formAttribute.push(formContentAttribute);
-                        }
-                    });
-                }
-            }
-            else {
-                formAttribute = attribute;
-            }
-        }
-        return formAttribute;
-    };
-    /**
      * Get form object of the entity
      */
     OptEntity.prototype.getFormContent = function () {
@@ -280,11 +166,21 @@ var OptEntity = (function () {
         var self = this;
         Object.keys(this).map(function (key) {
             var attribute = self[key];
-            // remove underscore on private attributes
-            key = key.replace(/^[_]/g, '');
-            var formContentAttribute = self.getFormContentAttribute(key, attribute);
-            if (!util.isUndefined(formContentAttribute)) {
-                formContent[key] = formContentAttribute;
+            if (key !== 'id') {
+                if (attribute instanceof OptEntity && attribute.id) {
+                    formContent[key] = attribute.id;
+                }
+                else if (Array.isArray(attribute)) {
+                    if (attribute.length > 0) {
+                        formContent[key] = [];
+                        attribute.map(function (subAttribute) {
+                            formContent[key].push(subAttribute.getFormContent());
+                        });
+                    }
+                }
+                else {
+                    formContent[key] = attribute;
+                }
             }
         });
         return formContent;
@@ -298,256 +194,6 @@ var OptEntity = (function () {
         return form;
     };
     return OptEntity;
-}());
-
-var __extends = (undefined && undefined.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var FilterFactory = (function () {
-    function FilterFactory(url) {
-        this.url = url;
-    }
-    FilterFactory.getFiltersByUrl = function (url) {
-        var regex = /\?(.*)/g;
-        var regexQueryParams = regex.exec(url);
-        if (!regexQueryParams || (regexQueryParams && regexQueryParams.length === 0)) {
-            return [];
-        }
-        var strQueryParams = regexQueryParams[1];
-        if (!strQueryParams) {
-            return [];
-        }
-        var splitQueryParams = strQueryParams.split('&');
-        var extraFilters = [];
-        var filters = [];
-        for (var _i = 0, splitQueryParams_1 = splitQueryParams; _i < splitQueryParams_1.length; _i++) {
-            var queryParam = splitQueryParams_1[_i];
-            var splitQueryParam = queryParam.split('=');
-            var key = splitQueryParam[0];
-            var value = splitQueryParam[1];
-            var splitValue = value.split(':');
-            var filter = void 0;
-            switch (key) {
-                case 'filterBy':
-                    var strOperator = splitValue[2];
-                    var operatorOptions = strOperator && strOperator === 'like' ? exports.OperatorOptions.Like : exports.OperatorOptions.Equals;
-                    filter = new FilterBy(splitValue[0], splitValue[1], operatorOptions);
-                    break;
-                case 'select':
-                    filter = new Select(value);
-                    break;
-                case 'offset':
-                    filter = new Offset(Number.parseInt(value));
-                    break;
-                case 'limit':
-                    filter = new Limit(Number.parseInt(value));
-                    break;
-                case 'orderBy':
-                    var strOrderOption = splitValue[1];
-                    var orderByOption = strOrderOption && strOrderOption === 'desc' ? exports.OrderByOptions.Desc : exports.OrderByOptions.Asc;
-                    filter = new OrderBy(value, orderByOption);
-                    break;
-                case 'search':
-                    filter = new Search(value);
-                    break;
-                case 'total':
-                    filter = new Total(Number.parseInt(value));
-                    break;
-                default:
-                    extraFilters.push(new Filter(key, value));
-                    break;
-            }
-            if (filter) {
-                filters.push(filter);
-            }
-        }
-        if (extraFilters.length > 0) {
-            filters.push(new Extra(extraFilters));
-        }
-        return filters;
-    };
-    FilterFactory.prototype.addFilter = function (filter) {
-        if (!this.url) {
-            this.url = '';
-        }
-        if (this.url.length > 0) {
-            this.url += '&' + filter.toString();
-        }
-        else {
-            this.url += filter.toString();
-        }
-    };
-    FilterFactory.prototype.generateUrl = function (filtersOptions) {
-        var strFilters = '';
-        for (var key in filtersOptions) {
-            if (!filtersOptions.hasOwnProperty(key)) {
-                continue;
-            }
-            var filterOption = filtersOptions[key];
-            var strFilterOption = filterOption.toString();
-            if (!strFilterOption) {
-                continue;
-            }
-            strFilters += strFilters.length > 0 ? '&' : '?';
-            strFilters += strFilterOption;
-        }
-        return this.url + strFilters;
-    };
-    return FilterFactory;
-}());
-var Filter = (function () {
-    function Filter(name, value) {
-        this._name = name;
-        this._value = value;
-    }
-    Object.defineProperty(Filter.prototype, "name", {
-        get: function () {
-            return this._name;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Filter.prototype, "value", {
-        get: function () {
-            return this._value;
-        },
-        set: function (value) {
-            this._value = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Filter.prototype.toString = function () {
-        if (this._name && this._value) {
-            return this._name + '=' + this._value;
-        }
-        return '';
-    };
-    return Filter;
-}());
-
-(function (OperatorOptions) {
-    OperatorOptions[OperatorOptions["Equals"] = 0] = "Equals";
-    OperatorOptions[OperatorOptions["Like"] = 1] = "Like";
-})(exports.OperatorOptions || (exports.OperatorOptions = {}));
-var FilterBy = (function (_super) {
-    __extends(FilterBy, _super);
-    function FilterBy(attribute, value, operatorOption) {
-        var _this = _super.call(this, 'filterBy', value) || this;
-        _this.attribute = attribute;
-        _this.operatorOption = operatorOption !== undefined ? operatorOption : exports.OperatorOptions.Equals;
-        return _this;
-    }
-    FilterBy.prototype.toString = function () {
-        if (this.name && this.value && this.attribute) {
-            var str = this.name + '=' + this.attribute + ':' + this.value;
-            if (this.operatorOption === exports.OperatorOptions.Like) {
-                str += ':like';
-            }
-            return str;
-        }
-        return '';
-    };
-    return FilterBy;
-}(Filter));
-
-(function (OrderByOptions) {
-    OrderByOptions[OrderByOptions["Desc"] = 0] = "Desc";
-    OrderByOptions[OrderByOptions["Asc"] = 1] = "Asc";
-})(exports.OrderByOptions || (exports.OrderByOptions = {}));
-var OrderBy = (function (_super) {
-    __extends(OrderBy, _super);
-    function OrderBy(attribute, orderByOption) {
-        var _this = _super.call(this, 'orderBy', attribute) || this;
-        _this.orderByOption = orderByOption !== undefined ? orderByOption : exports.OrderByOptions.Desc;
-        return _this;
-    }
-    OrderBy.prototype.toString = function () {
-        if (this.name && this.value) {
-            var strOrderByOption = 'desc';
-            if (this.orderByOption === exports.OrderByOptions.Asc) {
-                strOrderByOption = 'asc';
-            }
-            return this.name + '=' + this.value + ':' + strOrderByOption;
-        }
-        return '';
-    };
-    return OrderBy;
-}(Filter));
-var Select = (function (_super) {
-    __extends(Select, _super);
-    function Select(value) {
-        return _super.call(this, 'select', value) || this;
-    }
-    return Select;
-}(Filter));
-var Search = (function (_super) {
-    __extends(Search, _super);
-    function Search(value) {
-        return _super.call(this, 'search', value) || this;
-    }
-    return Search;
-}(Filter));
-var Limit = (function (_super) {
-    __extends(Limit, _super);
-    function Limit(value) {
-        return _super.call(this, 'limit', value + '') || this;
-    }
-    return Limit;
-}(Filter));
-var Offset = (function (_super) {
-    __extends(Offset, _super);
-    function Offset(value) {
-        return _super.call(this, 'offset', value + '') || this;
-    }
-    return Offset;
-}(Filter));
-var Extra = (function (_super) {
-    __extends(Extra, _super);
-    function Extra(filters) {
-        var _this = _super.call(this, 'extra', filters.toString()) || this;
-        _this.filters = filters;
-        return _this;
-    }
-    Extra.prototype.toString = function () {
-        var str = '';
-        for (var _i = 0, _a = this.filters; _i < _a.length; _i++) {
-            var filter = _a[_i];
-            var strFilter = filter.toString();
-            if (strFilter) {
-                str += str.length > 0 ? '&' : '';
-                str += strFilter;
-            }
-        }
-        return str;
-    };
-    return Extra;
-}(Filter));
-var Total = (function (_super) {
-    __extends(Total, _super);
-    function Total(value) {
-        return _super.call(this, 'total', value + '') || this;
-    }
-    return Total;
-}(Filter));
-
-/**
- * @author Daniel Caris Zapata <dcaris@option.cl>
- */
-var OptFilteredResponse = (function () {
-    function OptFilteredResponse(response, data) {
-        this.data = data;
-        this.filtersOptions = FilterFactory.getFiltersByUrl(response.url);
-        this.filtersOptions.total = new Total(Number.parseInt(response.json().total));
-    }
-    return OptFilteredResponse;
 }());
 
 var OptPasswordValidation = (function () {
@@ -567,23 +213,15 @@ var OptPasswordValidation = (function () {
 }());
 
 var OptRestService = (function () {
-    function OptRestService(config, auth, http) {
-        this.config = config;
+    function OptRestService(apiUrl, auth, http) {
+        this.apiUrl = apiUrl;
         this.auth = auth;
         this.http = http;
         this.apiVersion = 'v1.0';
         this.defaultHeaders = new _angular_http.Headers({
             'Content-Type': 'application/json'
         });
-        this.apiUrl = config.apiUrl;
     }
-    OptRestService.prototype.createFilteredResponse = function (response) {
-        var _this = this;
-        var entities = response.json().result.map(function (item) {
-            return _this.createEntity(item);
-        });
-        return new OptFilteredResponse(response, entities);
-    };
     OptRestService.prototype.getBaseUrl = function () {
         return this.apiUrl + '/' + this.apiVersion;
     };
@@ -594,73 +232,57 @@ var OptRestService = (function () {
         return new _angular_http.Headers(headers);
     };
     OptRestService.prototype.getList = function () {
-        var _this = this;
-        return this.http
-            .get(this.getEntityBaseUrl() + '?limit=1000', { headers: this.getHeaders() })
-            .map(function (response) {
+        var self = this;
+        return this.http.get(this.getEntityBaseUrl(), { headers: this.getHeaders() })
+            .toPromise()
+            .then(function (response) {
             return response.json().result.map(function (item) {
-                return _this.createEntity(item);
+                return self.createEntity(item);
             });
         })
             .catch(this.handleError);
     };
-    // @example filtersOptions: FiltersOptions = {
-    //   filterBy: new FilterBy('name', 'orellana', OperatorOptions.Like),
-    //   select: new Select('name'),
-    //   offset: new Offset(0),
-    //   limit: new Limit(10),
-    //   orderBy: new OrderBy('name', OrderByOptions.Desc),
-    //   search: new Search('orellana'),
-    //   extra: new Extra([
-    //     new Filter('practitioner', 'orellana'),
-    //     new Filter('from', '2017-09-15'),
-    //     new Filter('to', '2017-09-18')
-    //   ]),
-    // };
-    OptRestService.prototype.getFilteredList = function (filtersOptions) {
-        var _this = this;
-        var filterFactory = new FilterFactory(this.getEntityBaseUrl());
-        var url = filterFactory.generateUrl(filtersOptions);
-        return this.http.get(url, { headers: this.getHeaders() })
-            .map(function (response) { return _this.createFilteredResponse(response); })
-            .catch(this.handleError);
-    };
     OptRestService.prototype.getOne = function (id) {
-        var _this = this;
         var url = this.getEntityBaseUrl() + '/' + id;
+        var self = this;
         return this.http.get(url, { headers: this.getHeaders() })
-            .map(function (response) { return _this.createEntity(response.json().result); })
+            .toPromise()
+            .then(function (response) { return self.createEntity(response.json().result); })
             .catch(this.handleError);
     };
     OptRestService.prototype.remove = function (id) {
         var url = this.getEntityBaseUrl() + '/' + id;
         return this.http.delete(url, { headers: this.getHeaders() })
-            .map(function (response) { return OptResponse.fromJSON(response); })
+            .toPromise()
+            .then(function (response) { return OptResponse.fromJSON(response); })
             .catch(this.handleError);
     };
     OptRestService.prototype.create = function (entity) {
         return this.http
             .post(this.getEntityBaseUrl(), JSON.stringify(entity.toForm()), { headers: this.getHeaders() })
-            .map(function (response) { return OptResponse.fromJSON(response); })
+            .toPromise()
+            .then(function (response) { return OptResponse.fromJSON(response); })
             .catch(this.handleError);
     };
     OptRestService.prototype.update = function (entity) {
         var url = this.getEntityBaseUrl() + '/' + entity.id;
         return this.http
             .patch(url, JSON.stringify(entity.toForm()), { headers: this.getHeaders() })
-            .map(function (response) { return OptResponse.fromJSON(response); })
+            .toPromise()
+            .then(function (response) { return OptResponse.fromJSON(response); })
             .catch(this.handleError);
     };
     OptRestService.prototype.change = function (entity) {
         var url = this.getEntityBaseUrl() + '/' + entity.id;
         return this.http
             .put(url, JSON.stringify(entity.toForm()), { headers: this.getHeaders() })
-            .map(function (response) { return OptResponse.fromJSON(response); })
+            .toPromise()
+            .then(function (response) { return OptResponse.fromJSON(response); })
             .catch(this.handleError);
     };
     OptRestService.prototype.handleError = function (error) {
         console.error('An error occurred', error);
-        return rxjs_Observable.Observable.throw(OptResponse.fromJSON(error));
+        return Promise.reject(OptResponse.fromJSON(error));
     };
     return OptRestService;
 }());
@@ -669,7 +291,7 @@ OptRestService.decorators = [
 ];
 /** @nocollapse */
 OptRestService.ctorParameters = function () { return [
-    { type: undefined, decorators: [{ type: _angular_core.Inject, args: [MODULE_CONFIG,] },] },
+    { type: undefined, decorators: [{ type: _angular_core.Inject, args: [API_URL,] },] },
     { type: OptAuthService, },
     { type: _angular_http.Http, },
 ]; };
@@ -720,9 +342,9 @@ OptAuthGuard.ctorParameters = function () { return [
     { type: _angular_router.Router, },
 ]; };
 
-// Models
+// Constants
 
-var __extends$2 = (undefined && undefined.__extends) || (function () {
+var __extends$1 = (undefined && undefined.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
         function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
@@ -733,7 +355,7 @@ var __extends$2 = (undefined && undefined.__extends) || (function () {
     };
 })();
 var MockError = (function (_super) {
-    __extends$2(MockError, _super);
+    __extends$1(MockError, _super);
     function MockError(responseOptions) {
         return _super.call(this, new _angular_http.ResponseOptions(responseOptions)) || this;
     }
@@ -752,7 +374,7 @@ var Mock = (function () {
     return Mock;
 }());
 
-var __extends$1 = (undefined && undefined.__extends) || (function () {
+var __extends = (undefined && undefined.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
         function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
@@ -763,7 +385,7 @@ var __extends$1 = (undefined && undefined.__extends) || (function () {
     };
 })();
 var AuthMock = (function (_super) {
-    __extends$1(AuthMock, _super);
+    __extends(AuthMock, _super);
     function AuthMock() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.users = AuthMock.getUsers();
@@ -889,7 +511,7 @@ var AuthMock = (function (_super) {
     return AuthMock;
 }(Mock));
 
-var __extends$4 = (undefined && undefined.__extends) || (function () {
+var __extends$3 = (undefined && undefined.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
         function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
@@ -900,7 +522,7 @@ var __extends$4 = (undefined && undefined.__extends) || (function () {
     };
 })();
 var RestMock = (function (_super) {
-    __extends$4(RestMock, _super);
+    __extends$3(RestMock, _super);
     function RestMock() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         // array in local storage for registered resources
@@ -933,10 +555,7 @@ var RestMock = (function (_super) {
     };
     RestMock.prototype.requests = function () {
         // get all resources
-        var isEndsWith = this.connection.request.url.endsWith(this.getResourceEndpoint());
-        var getAllParamsRegex = new RegExp(this.getResourceEndpoint() + '\\?');
-        var isGetAllParams = this.connection.request.url.match(getAllParamsRegex);
-        if ((isEndsWith || isGetAllParams) && this.connection.request.method === _angular_http.RequestMethod.Get) {
+        if (this.connection.request.url.endsWith(this.getResourceEndpoint()) && this.connection.request.method === _angular_http.RequestMethod.Get) {
             // check for fake auth token in header and return resources if valid, this security is implemented server side in a real application
             if (!this.hasSecurityMock() || this.isAuthorizedUser()) {
                 // respond 200 OK with resources
@@ -1054,7 +673,7 @@ var RestMock = (function (_super) {
     return RestMock;
 }(Mock));
 
-var __extends$3 = (undefined && undefined.__extends) || (function () {
+var __extends$2 = (undefined && undefined.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
         function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
@@ -1065,7 +684,7 @@ var __extends$3 = (undefined && undefined.__extends) || (function () {
     };
 })();
 var UserMock = (function (_super) {
-    __extends$3(UserMock, _super);
+    __extends$2(UserMock, _super);
     function UserMock() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
@@ -1194,9 +813,7 @@ var OptFormComponent = (function () {
         };
         this.SERVER_MESSAGES = {
             401: 'Unauthorized message',
-            403: 'Forbidden message',
-            500: 'Server error',
-            '*': 'Default error'
+            403: 'Forbidden message'
         };
         /**
          *
@@ -1243,15 +860,6 @@ var OptFormComponent = (function () {
     OptFormComponent.prototype.isFromValid = function () {
         return this.form.valid;
     };
-    OptFormComponent.prototype.setServerMessage = function (statusCode, isSuccessMessage) {
-        if (isSuccessMessage === void 0) { isSuccessMessage = false; }
-        this.serverMessage.message = this.SERVER_MESSAGES[statusCode];
-        if (!this.serverMessage.message) {
-            this.serverMessage.message = this.SERVER_MESSAGES['*'];
-        }
-        this.serverMessage.show = true;
-        this.serverMessage.isStatusOk = isSuccessMessage;
-    };
     OptFormComponent.prototype.onSubmit = function () {
         var self = this;
         self.submitted = true;
@@ -1274,21 +882,12 @@ var OptFormComponent = (function () {
         }
         var form = this.form;
         for (var field in this.formErrors) {
-            if (!this.formErrors.hasOwnProperty(field)) {
-                continue;
-            }
             // clear previous error message (if any)
             this.formErrors[field] = '';
             var control = form.get(field);
-            if ((control && control.dirty && !control.valid) || (control && this.submitted)) {
-                if (!control.errors) {
-                    continue;
-                }
+            if ((control && control.dirty && !control.valid) || this.submitted) {
                 var messages = this.VALIDATION_MESSAGES[field];
                 for (var key in control.errors) {
-                    if (!control.errors.hasOwnProperty(key)) {
-                        continue;
-                    }
                     if (this.formErrors[field] === '') {
                         this.formErrors[field] = messages[key];
                     }
@@ -1299,7 +898,7 @@ var OptFormComponent = (function () {
     return OptFormComponent;
 }());
 
-var __extends$5 = (undefined && undefined.__extends) || (function () {
+var __extends$4 = (undefined && undefined.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
         function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
@@ -1313,25 +912,12 @@ var __extends$5 = (undefined && undefined.__extends) || (function () {
  * @author Daniel Caris Zapata <dcaris@optionti.com>
  */
 var OptUser = (function (_super) {
-    __extends$5(OptUser, _super);
+    __extends$4(OptUser, _super);
     function OptUser() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     OptUser.prototype.getFormEntityName = function () {
         return 'user';
-    };
-    OptUser.prototype.toRegisterForm = function () {
-        var formContent = _super.prototype.getFormContent.call(this);
-        Object.keys(formContent).map(function (key) {
-            var attribute = formContent[key];
-            if (key === 'password') {
-                formContent['plainPassword'] = {
-                    'first': attribute,
-                    'second': attribute
-                };
-            }
-        });
-        return { 'register': formContent };
     };
     OptUser.prototype.decode = function (jsonObject) {
         this.id = jsonObject['id'];
@@ -1348,7 +934,7 @@ var OptUser = (function (_super) {
     return OptUser;
 }(OptEntity));
 
-var __extends$6 = (undefined && undefined.__extends) || (function () {
+var __extends$5 = (undefined && undefined.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
         function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
@@ -1359,7 +945,7 @@ var __extends$6 = (undefined && undefined.__extends) || (function () {
     };
 })();
 var OptUserService = (function (_super) {
-    __extends$6(OptUserService, _super);
+    __extends$5(OptUserService, _super);
     function OptUserService() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
@@ -1370,15 +956,15 @@ var OptUserService = (function (_super) {
         return new OptUser(json);
     };
     OptUserService.prototype.getMe = function () {
-        var self = this;
-        if (this.getMeObservable) {
-            return this.getMeObservable;
+        if (this.user) {
+            return Promise.resolve(this.user);
         }
-        return this.getMeObservable = this.http
+        var self = this;
+        return this.http
             .get(this.getEntityBaseUrl() + '/me', { headers: this.getHeaders() })
-            .map(function (response) {
-            self.getMeObservable = null;
-            return self.createEntity(response.json().result);
+            .toPromise()
+            .then(function (response) {
+            return self.user = self.createEntity(response.json().result);
         })
             .catch(this.handleError);
     };
@@ -1390,7 +976,8 @@ var OptUserService = (function (_super) {
         };
         return this.http
             .post(this.getEntityBaseUrl() + '/me/password', JSON.stringify(body), { headers: this.getHeaders() })
-            .map(function (response) { return OptResponse.fromJSON(response); })
+            .toPromise()
+            .then(function (response) { return OptResponse.fromJSON(response); })
             .catch(this.handleError);
     };
     return OptUserService;
@@ -1401,21 +988,10 @@ OptUserService.decorators = [
 /** @nocollapse */
 OptUserService.ctorParameters = function () { return []; };
 
-exports.MODULE_CONFIG = MODULE_CONFIG;
 exports.OptionCoreModule = OptionCoreModule;
+exports.API_URL = API_URL;
 exports.OptEntity = OptEntity;
 exports.OptResponse = OptResponse;
-exports.FilterFactory = FilterFactory;
-exports.Filter = Filter;
-exports.FilterBy = FilterBy;
-exports.OrderBy = OrderBy;
-exports.Select = Select;
-exports.Search = Search;
-exports.Limit = Limit;
-exports.Offset = Offset;
-exports.Extra = Extra;
-exports.Total = Total;
-exports.OptFilteredResponse = OptFilteredResponse;
 exports.OptPasswordValidation = OptPasswordValidation;
 exports.OptRestService = OptRestService;
 exports.OptAuthService = OptAuthService;
@@ -1428,7 +1004,6 @@ exports.Mock = Mock;
 exports.RestMock = RestMock;
 exports.UserMock = UserMock;
 exports.OptFormComponent = OptFormComponent;
-exports.OptLazyScriptService = OptLazyScriptService;
 exports.OptUser = OptUser;
 exports.OptUserService = OptUserService;
 

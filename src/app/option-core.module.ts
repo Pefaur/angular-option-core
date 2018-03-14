@@ -1,10 +1,9 @@
 import { NgModule, ModuleWithProviders } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { OptAuthService } from './shared/auth.service';
-import { OptLazyScriptService } from './lazy-script/lazy-script.service';
+import { OptAuthService } from './common/auth.service';
 
-import { OptionCoreConfig, MODULE_CONFIG } from './option-core.config';
+import { API_URL } from './common/api-url.config';
 
 @NgModule({
   imports: [
@@ -13,10 +12,10 @@ import { OptionCoreConfig, MODULE_CONFIG } from './option-core.config';
   declarations: []
 })
 export class OptionCoreModule {
-  static forRoot(config: OptionCoreConfig): ModuleWithProviders {
+  static forRoot(apiUrl: string): ModuleWithProviders {
     return {
       ngModule: OptionCoreModule,
-      providers: [OptAuthService, OptLazyScriptService, {provide: MODULE_CONFIG, useValue: config}]
+      providers: [OptAuthService, {provide: API_URL, useValue: apiUrl}]
     };
   }
 }

@@ -6,14 +6,15 @@ export default {
   moduleName: 'ng.core',
   globals: {
     '@angular/core': 'ng.core',
-    '@angular/common': 'ng.common',
-    '@angular/http': 'ng.http',
-    '@angular/router': 'ng.router',
-    '@angular/forms': 'ng.forms',
+    '@angular/common': '_angular_common',
+    '@angular/http': '_angular_http',
+    '@angular/router': '_angular_router',
+    '@angular/forms': '_angular_forms',
     'rxjs/Observable': 'Rx',
-    'rxjs/add/operator/map': 'Rx',
-    'rxjs/add/operator/catch': 'Rx',
-    'rxjs/add/observable/throw': 'Rx',
-    'rxjs/add/observable/of': 'Rx'
+    'rxjs/ReplaySubject': 'Rx',
+    'rxjs/add/operator/map': 'Rx.Observable.prototype',
+    'rxjs/add/operator/mergeMap': 'Rx.Observable.prototype',
+    'rxjs/add/observable/fromEvent': 'Rx.Observable',
+    'rxjs/add/observable/of': 'Rx.Observable'
   }
 }
